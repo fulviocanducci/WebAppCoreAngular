@@ -1,0 +1,105 @@
+﻿@model WebAppCoreAngular.Models.People
+@{ ViewData["Title"] = "Pessoa - Alterando registro"; }
+<h2>Alterando um registro existente ...</h2>
+<h4>Pessoa</h4>
+<hr />
+<form asp-action="Edit">
+    <input type="hidden" asp-for="Id" />
+    <div class="row">
+        <div class="col-md-4">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="Name" class="control-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Atualizar" class="btn btn-default" />
+            </div>
+        </div>
+        <div class="col-md-8" ng-app="app" ng-controller="ctrl">
+            <div class="row" ng-repeat="phone in phones" ng-show="phones.length > 0">
+                <input type="hidden" name="Phones[{{$index}}].Id" ng-model="phone.id" />
+                <input type="hidden" name="Phones[{{$index}}].PeopleId" ng-model="phone.peopleId" />
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label for="ddd" class="control-label">DDD</label>
+                        <input type="text" id="ddd" name="Phones[{{$index}}].Ddd" ng-model="phone.ddd" class="form-control" placeholder="DDD">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="number" class="control-label">Número do Telefone</label>
+                        <input type="text" id="number" name="Phones[{{$index}}].Number" ng-model="phone.number" class="form-control" placeholder="Número">
+                    </div>
+                </div>
+                <div class="col-md-2" ng-show="phone.id==0" style="margin-top:23px">
+                    <div class="form-group">                        
+                        <button class="btn btn-info" type="button" ng-click="save(phone, $index)">Salvar</button>                        
+                    </div>
+                </div>
+                <div class="col-md-2" ng-show="phone.id>0" style="margin-top:23px">
+                    <div class="form-group">                        
+                        <button class="btn btn-success" type="button" ng-click="update(phone)">Alterar</button>                        
+                    </div>
+                </div>
+                <div class="col-md-2"  style="margin-top:23px">
+                    <div class="form-group">                        
+                        <button class="btn btn-danger" type="button" ng-click="delete($index)">Excluir</button>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <button class="btn btn-info" type="button" ng-click="add()">Adicionar Telefone</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+<div>
+    <a asp-action="Index"><< Voltar</a>
+</div>
+
+@section Scripts {
+    <script src="~/lib/angular/angular.min.js"></script>
+    <script>
+        var app = angular.module('app', []);
+        //app.config(function ($httpProvider) {
+        //    $httpProvider.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
+        //    $httpProvider.defaults.headers.common['X-XSRF-Token'] =
+        //        angular.element('input[name="__RequestVerificationToken"]').attr('value');
+        //    $httpProvider.defaults.headers.common['RequestVerificationToken'] = 
+        //        angular.element('input[name="__RequestVerificationToken"]').attr('value');
+        //});
+        app.controller('ctrl', function ($scope, $http) {
+            $scope.phones = [];
+            $scope.add = function () {
+                $scope.phones.push({ 'id': 0, 'ddd': '', 'number': '', 'peopleId': '@Model.Id' });
+            };
+            $scope.save = function (model, index) {                
+                $http.post('/api/phones', model)
+                    .then(function (result) {
+                        console.log(index);
+                        $scope.phones[index].id = result.data.id;
+                    });
+            };
+            $scope.update = function (model) {
+                console.log(model);
+            };
+            $scope.delete = function (index) {
+                var id = $scope.phones(index).id;
+                console.log(id);
+            };
+            $scope.load = function () {
+                $http.get('/api/phones/people/@Model.Id')
+                    .then(function (result) {
+                        console.log(result.data);
+                        $scope.phones = result.data;
+                    });                
+            };
+            $scope.load();
+        });
+    </script>
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

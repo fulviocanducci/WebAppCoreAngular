@@ -1,0 +1,68 @@
+﻿@model WebAppCoreAngular.Models.People
+@{ ViewData["Title"] = "Pessoa - Criando um novo registro"; }
+<h2>Criando um novo registro ...</h2>
+<h4>Pessoa</h4>
+<hr />
+<form asp-action="Create">
+    <div class="row">
+        <div class="col-md-4">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="Name" class="control-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-default" />
+            </div>
+        </div>
+        <div class="col-md-8" ng-app="app" ng-controller="ctrl">          
+            <div class="row" ng-repeat="phone in phones">
+                <input type="hidden" ng-model="phone.id" />
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label for="ddd" class="control-label">DDD</label>
+                        <input type="text" id="ddd" name="Phones[{{$index}}].Ddd" ng-model="phone.ddd" class="form-control" placeholder="DDD">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="number" class="control-label">Número do Telefone</label>
+                        <input type="text" id="number" name="Phones[{{$index}}].Number" ng-model="phone.number" class="form-control" placeholder="Número">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label class="control-label" style="color:white">...</label>
+                        <button class="btn btn-danger btn-block" type="button" ng-click="delete($index)">Excluir</button>
+                    </div>                        
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <button class="btn btn-info" type="button" ng-click="add()">Adicionar Telefone</button>
+                </div>
+            </div>
+        </div>        
+    </div>
+</form>
+<div>
+    <a asp-action="Index"><< Voltar</a>
+</div>
+
+@section Scripts {
+    <script src="~/lib/angular/angular.min.js"></script>
+    <script>
+        var app = angular.module('app', []);
+        app.controller('ctrl', function ($scope) {
+            $scope.phones = [];
+            $scope.add = function () {
+                $scope.phones.push({ 'id': 0, 'ddd': '', 'number': '' });
+            };
+            $scope.delete = function (index) {
+                $scope.phones.splice(index, 1);
+            };
+        });
+    </script>
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
