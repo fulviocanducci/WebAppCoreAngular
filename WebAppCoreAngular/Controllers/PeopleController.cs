@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -62,17 +63,32 @@ namespace WebAppCoreAngular.Controllers
                 return NotFound();
             }
 
-            var people = await _context.People.FindAsync(id);            
+            var people = await _context.People.FindAsync(id);               
             if (people == null)
             {
                 return NotFound();
+            }
+            var phones = _context.Phone.Where(x => x.PeopleId == id)
+                    .Select(x => new
+                    {
+                        id = x.Id, 
+                        ddd = x.Ddd,
+                        number = x.Number,
+                        peopleId = x.PeopleId,
+                        status = 'S'
+                    })
+                    .ToList();
+            ViewBag.Phones = "[]";
+            if (phones != null)
+            {
+                ViewBag.Phones = Newtonsoft.Json.JsonConvert.SerializeObject(phones);
             }
             return View(people);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Name")] People people)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Name")] People people, IList<PhonesViewModel> phonesViewModel)
         {
             if (id != people.Id)
             {
@@ -84,6 +100,31 @@ namespace WebAppCoreAngular.Controllers
                 try
                 {
                     _context.Update(people);
+                    IList<PhonesViewModel> phs = phonesViewModel.Where(x => x.Status != "S").ToList();
+                    foreach (var ph in phs)
+                    {
+                        if (!string.IsNullOrEmpty(ph.Ddd) && !string.IsNullOrEmpty(ph.Number))
+                        {
+                            if (ph.Status == "D" && ph.PeopleId == id && ph.Id > 0)
+                            {
+                                Phone _d = ph;                                
+                                _context.Phone.Remove(_d);                                
+                            }
+                            else if(ph.Ddd.Length == 2 && ph.Number.Length >= 8 && ph.PeopleId == id)
+                            {
+                                if (ph.Status == "N" && ph.Id == 0)
+                                {
+                                    Phone _n = ph;
+                                    _context.Phone.Add(_n);                                   
+                                }
+                                else if (ph.Status == "A" && ph.Id > 0)
+                                {
+                                    Phone _u = ph;
+                                    _context.Phone.Update(_u);
+                                }
+                            }
+                        }
+                    }
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
@@ -97,7 +138,7 @@ namespace WebAppCoreAngular.Controllers
                         throw;
                     }
                 }
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Edit), id);
             }
             return View(people);
         }
